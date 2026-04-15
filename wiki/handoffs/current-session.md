@@ -197,6 +197,38 @@ Current completeness state after the successful run:
   - historical unread messages not yet in `raw`: `200`
   - pending attachments on those unread historical messages not yet in `raw`: `17`
 
+## Latest Follow-Up Verification
+
+Follow-up verification on `2026-04-15` resolved the remaining false-positive backlog.
+
+- root cause:
+  - Outlook items without `internetMessageId` were keyed differently in historical backlog code than in persisted raw storage
+  - stored raw messages used `EntryID`
+  - backlog and catch-up logic had been using `StoreID::EntryID`
+- fix:
+  - aligned `_message_key_for_item()` in `services/mail_ingest/outlook_desktop_client.py` with `MailStorage.message_key()`
+- verification run:
+  - log: `logs/mail_cycle_20260415_065209.log`
+  - stdout: `logs/mail_cycle_20260415_065209.stdout.log`
+  - stderr: `logs/mail_cycle_20260415_065209.stderr.log`
+  - exit code: `logs/mail_cycle_20260415_065209.exitcode.txt`
+- verified outcome:
+  - `0` new synced messages
+  - `25` existing recent messages skipped
+  - `0` historical unread messages synced
+  - `0` historical unread messages skipped
+  - historical backlog now reports:
+    - `historicalNotInRaw: 0`
+    - `historicalUnreadNotInRaw: 0`
+    - `historicalUnreadNotInRawAttachmentCount: 0`
+  - total saved raw messages on disk remains: `19449`
+
+Current archive completeness state:
+
+- `raw/` archive is complete for the currently scanned mailbox tree
+- all previously reported remaining `200` historical messages were a key-mismatch accounting issue, not missing raw artifacts
+- pending unread historical attachments not yet in raw: `0`
+
 ## Important Operational Rules
 
 - Run the desktop Outlook provider only in an interactive logged-in Windows session.

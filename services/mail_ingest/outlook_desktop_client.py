@@ -508,11 +508,13 @@ class OutlookDesktopClient:
         return value, ""
 
     def _message_key_for_item(self, item) -> str:
-        store_id = self._safe_str(getattr(getattr(item, "Parent", None), "StoreID", ""))
         entry_id = self._safe_str(getattr(item, "EntryID", ""))
         internet_message_id = self._get_property(item, "http://schemas.microsoft.com/mapi/proptag/0x1035001F")
         subject = self._safe_str(getattr(item, "Subject", "")) or "message"
-        seed = internet_message_id or self._compose_message_id(entry_id, store_id) or subject
+        # Keep backlog/catch-up keying aligned with MailStorage.message_key().
+        # Stored messages use internetMessageId, and when Outlook does not provide
+        # one we persist the raw EntryID there rather than StoreID::EntryID.
+        seed = internet_message_id or entry_id or subject
         return MailStorage.message_key_from_seed(seed)
 
     @staticmethod

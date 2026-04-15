@@ -110,3 +110,21 @@
   - `wiki/handoffs/stable-working-state-2026-04-15.md`
 - created a local code snapshot archive because this workspace is not a `git` repository:
   - `snapshots/automation-working-state-2026-04-15.zip`
+
+## [2026-04-15] bugfix | Historical backlog key alignment and zero-gap verification
+
+- fixed a key mismatch in `services/mail_ingest/outlook_desktop_client.py`
+- root cause:
+  - raw storage keyed some Outlook messages by `EntryID`
+  - historical backlog and catch-up logic had been keying the same items by `StoreID::EntryID`
+  - this made already archived messages appear as both `existing` and `not in raw`
+- aligned `_message_key_for_item()` with `MailStorage.message_key()`
+- verified with interactive Outlook monitor run:
+  - `logs/mail_cycle_20260415_065209.log`
+  - `logs/mail_cycle_20260415_065209.stdout.log`
+  - `logs/mail_cycle_20260415_065209.exitcode.txt`
+- final verified backlog state:
+  - `historicalNotInRaw`: `0`
+  - `historicalUnreadNotInRaw`: `0`
+  - `historicalUnreadNotInRawAttachmentCount`: `0`
+- total raw saved messages on disk remained `19449`
