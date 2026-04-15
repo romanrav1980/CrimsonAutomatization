@@ -1,0 +1,39 @@
+@{
+    ViewData["Title"] = "Data Policy";
+}
+
+<section class="content-section compact-section">
+    <div class="section-heading">
+        <span class="eyebrow">Security</span>
+        <h1>Data and access policy</h1>
+    </div>
+    <div class="privacy-grid">
+        <article class="capability-card">
+            <h3>Mail data</h3>
+            <p>
+                Mail bodies and attachments are treated as sensitive content.
+                Raw mail stays outside git history and should only be used for operational processing.
+            </p>
+        </article>
+        <article class="capability-card">
+            <h3>Credentials</h3>
+            <p>
+                Outlook and API secrets must stay in `.env`, environment variables,
+                or a dedicated secret store. Do not hardcode credentials in source files.
+            </p>
+        </article>
+        <article class="capability-card">
+            <h3>Auditability</h3>
+            <p>
+                Any automated decision should be traceable with source message key,
+                decision mode, reasoning, timestamp, and actor type.
+            </p>
+        </article>
+        <article class="capability-card">
+            <h3>MVP control model</h3>
+            <p>
+                The first release prioritizes scheduler-based reliability and human review over aggressive autonomy.
+            </p>
+        </article>
+    </div>
+</section>

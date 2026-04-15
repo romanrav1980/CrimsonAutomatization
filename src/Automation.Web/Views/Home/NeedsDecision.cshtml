@@ -1,0 +1,328 @@
+@model Automation.Web.Models.MailDashboardViewModel
+@{
+    ViewData["Title"] = "Needs Decision";
+}
+
+<section class="content-section">
+    <div class="section-heading">
+        <span class="eyebrow">Decision Queue</span>
+        <h1>Needs Decision</h1>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.FlashMessage))
+    {
+        <div class="flash-banner flash-@Model.FlashKind">
+            @Model.FlashMessage
+        </div>
+    }
+
+    <div class="summary-grid">
+        <article class="summary-card">
+            <span>Total messages</span>
+            <strong>@Model.Summary.TotalMessages</strong>
+        </article>
+        <article class="summary-card">
+            <span>Needs decision</span>
+            <strong>@Model.Summary.NeedsDecision</strong>
+        </article>
+        <article class="summary-card">
+            <span>Manual review</span>
+            <strong>@Model.Summary.ManualReview</strong>
+        </article>
+        <article class="summary-card">
+            <span>Auto ready</span>
+            <strong>@Model.Summary.AutoReady</strong>
+        </article>
+    </div>
+
+    <div class="backlog-panel">
+        <div class="section-heading backlog-heading">
+            <span class="eyebrow">Historical Backlog</span>
+            <h2>Mail from previous years that still needs attention</h2>
+        </div>
+
+        @if (!Model.HasHistoricalBacklog)
+        {
+            <div class="empty-state">
+                <h2>No historical backlog snapshot yet</h2>
+                <p>
+                    Run `python .\scripts\sync_outlook_mail.py --process-after-sync` in an interactive Outlook session,
+                    then refresh this page to see unread and not-yet-ingested mail from previous years.
+                </p>
+                <p class="path-caption">Expected ingest status path: @Model.IngestStatusPath</p>
+            </div>
+        }
+        else
+        {
+            <div class="summary-grid backlog-summary-grid">
+                <article class="summary-card">
+                    <span>Historical unread</span>
+                    <strong>@Model.HistoricalBacklog.HistoricalUnread</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Historical not in raw</span>
+                    <strong>@Model.HistoricalBacklog.HistoricalNotInRaw</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Unread and not in raw</span>
+                    <strong>@Model.HistoricalBacklog.HistoricalUnreadNotInRaw</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Oldest year</span>
+                    <strong>@(Model.HistoricalBacklog.OldestYear == 0 ? "n/a" : Model.HistoricalBacklog.OldestYear)</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Unread with attachments</span>
+                    <strong>@Model.HistoricalBacklog.HistoricalUnreadWithAttachments</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Unread attachment count</span>
+                    <strong>@Model.HistoricalBacklog.HistoricalUnreadAttachmentCount</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Pending unread mails with attachments</span>
+                    <strong>@Model.HistoricalBacklog.HistoricalUnreadNotInRawWithAttachments</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Pending unread attachment count</span>
+                    <strong>@Model.HistoricalBacklog.HistoricalUnreadNotInRawAttachmentCount</strong>
+                </article>
+            </div>
+
+            <div class="queue-meta">
+                <span>Mailbox: @Model.HistoricalBacklog.Mailbox</span>
+                <span>Folder: @Model.HistoricalBacklog.Folder</span>
+                <span>Snapshot UTC: @Model.HistoricalBacklog.GeneratedUtc</span>
+            </div>
+
+            @if (Model.HistoricalBacklog.Catchup.Enabled)
+            {
+                <div class="queue-meta">
+                    <span>Historical catch-up: enabled</span>
+                    <span>Batch size: @Model.HistoricalBacklog.Catchup.BatchSize</span>
+                    <span>Last catch-up run UTC: @(string.IsNullOrWhiteSpace(Model.HistoricalBacklog.Catchup.LastRunUtc) ? "n/a" : Model.HistoricalBacklog.Catchup.LastRunUtc)</span>
+                    <span>Last catch-up: @Model.HistoricalBacklog.Catchup.LastProcessedCount mail / @Model.HistoricalBacklog.Catchup.LastAttachmentCount attachments</span>
+                </div>
+            }
+
+            @if (Model.HistoricalBacklog.Years.Count > 0)
+            {
+                <div class="backlog-year-table-wrap">
+                    <table class="backlog-year-table">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Total</th>
+                                <th>Unread</th>
+                                <th>Not in raw</th>
+                                <th>Unread and not in raw</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var year in Model.HistoricalBacklog.Years)
+                            {
+                                <tr>
+                                    <td>@year.Year</td>
+                                    <td>@year.TotalMessages</td>
+                                    <td>@year.UnreadMessages</td>
+                                    <td>@year.NotInRaw</td>
+                                    <td>@year.UnreadNotInRaw</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
+    </div>
+
+    @if (!Model.HasData)
+    {
+        <div class="empty-state">
+            <h2>No processed mail data yet</h2>
+            <p>
+                Run `python .\scripts\process_mail_mvp.py` or
+                `python .\scripts\sync_outlook_mail.py --process-after-sync`,
+                then refresh this page.
+            </p>
+            <p class="path-caption">Expected read model path: @Model.DataPath</p>
+        </div>
+    }
+    else if (Model.NeedsDecision.Count == 0)
+    {
+        <div class="empty-state">
+            <h2>The queue is currently empty</h2>
+            <p>Processed mail exists, but no items currently require manual or suggested review.</p>
+            <p class="path-caption">Read model: @Model.DataPath</p>
+        </div>
+    }
+    else
+    {
+        <div class="queue-meta">
+            <span>Generated UTC: @Model.GeneratedUtc</span>
+            <span>Read model: @Model.DataPath</span>
+        </div>
+
+        <div class="decision-list">
+            @foreach (var item in Model.NeedsDecision)
+            {
+                <article class="decision-card urgency-@item.Urgency.ToLowerInvariant()">
+                    <div class="decision-head">
+                        <div>
+                            <span class="decision-kicker">@item.ProcessType</span>
+                            <h2>@item.Subject</h2>
+                        </div>
+                        <div class="decision-badges">
+                            <span class="badge-panel">@item.DecisionMode</span>
+                            <span class="badge-panel">@item.Urgency urgency</span>
+                            <span class="badge-panel">@item.ServiceLevelState</span>
+                        </div>
+                    </div>
+
+                    <div class="decision-meta">
+                        <span>Sender: @item.Sender</span>
+                        @if (!string.IsNullOrWhiteSpace(item.SourceFolderPath))
+                        {
+                            <span>Outlook folder: @item.SourceFolderPath</span>
+                        }
+                        <span>Received: @item.ReceivedUtc</span>
+                        <span>Confidence: @item.Confidence</span>
+                        <span>Attachments: @item.AttachmentCount</span>
+                        <span>Owner: @(string.IsNullOrWhiteSpace(item.Owner) ? "unassigned" : item.Owner)</span>
+                    </div>
+
+                    <p class="decision-action">@item.RecommendedAction</p>
+                    <p class="decision-reason">@item.DecisionReason</p>
+
+                    @if (item.Labels.Count > 0)
+                    {
+                        <div class="label-row">
+                            @foreach (var label in item.Labels)
+                            {
+                                <span class="mini-label">@label</span>
+                            }
+                        </div>
+                    }
+
+                    @if (item.AnalyzedAttachmentCount > 0)
+                    {
+                        <section class="attachment-panel">
+                            <div class="attachment-panel-head">
+                                <strong>Attachment analysis</strong>
+                                <span>@item.AnalyzedAttachmentCount analyzed of @item.AttachmentCount attachment(s)</span>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(item.AttachmentSummary))
+                            {
+                                <p class="attachment-summary">@item.AttachmentSummary</p>
+                            }
+
+                            @if (item.AttachmentKinds.Count > 0)
+                            {
+                                <div class="label-row">
+                                    @foreach (var kind in item.AttachmentKinds)
+                                    {
+                                        <span class="mini-label">attachment:@kind</span>
+                                    }
+                                </div>
+                            }
+
+                            @if (item.AttachmentAnalysis.Count > 0)
+                            {
+                                <div class="attachment-list">
+                                    @foreach (var attachment in item.AttachmentAnalysis)
+                                    {
+                                        <article class="attachment-card">
+                                            <div class="attachment-card-head">
+                                                <strong>@attachment.Name</strong>
+                                                <span class="badge-panel">@attachment.Kind</span>
+                                            </div>
+                                            <p class="attachment-card-summary">@attachment.Summary</p>
+
+                                            <div class="decision-meta attachment-meta">
+                                                <span>Status: @attachment.AnalysisStatus</span>
+                                                @if (!string.IsNullOrWhiteSpace(attachment.Extension))
+                                                {
+                                                    <span>Extension: @attachment.Extension</span>
+                                                }
+                                                @if (attachment.Size > 0)
+                                                {
+                                                    <span>Size: @attachment.Size bytes</span>
+                                                }
+                                                @if (attachment.PageCount > 0)
+                                                {
+                                                    <span>Pages: @attachment.PageCount</span>
+                                                }
+                                                @if (attachment.WorksheetCount > 0)
+                                                {
+                                                    <span>Sheets: @attachment.WorksheetCount</span>
+                                                }
+                                                @if (attachment.ImageWidth > 0 && attachment.ImageHeight > 0)
+                                                {
+                                                    <span>Image: @attachment.ImageWidth x @attachment.ImageHeight</span>
+                                                }
+                                            </div>
+
+                                            @if (attachment.Signals.Count > 0)
+                                            {
+                                                <div class="label-row">
+                                                    @foreach (var signal in attachment.Signals)
+                                                    {
+                                                        <span class="mini-label">@signal</span>
+                                                    }
+                                                </div>
+                                            }
+
+                                            @if (!string.IsNullOrWhiteSpace(attachment.TextExcerpt))
+                                            {
+                                                <pre class="attachment-excerpt">@attachment.TextExcerpt</pre>
+                                            }
+                                        </article>
+                                    }
+                                </div>
+                            }
+                        </section>
+                    }
+
+                    <div class="decision-links">
+                        @if (!string.IsNullOrWhiteSpace(item.SourcePath))
+                        {
+                            <a href="@item.SourcePath" target="_blank" rel="noreferrer">Source markdown</a>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.RawMessagePath))
+                        {
+                            <a href="@item.RawMessagePath" target="_blank" rel="noreferrer">Raw message</a>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(item.WebLink))
+                        {
+                            <a href="@item.WebLink" target="_blank" rel="noreferrer">Open in Outlook</a>
+                        }
+                    </div>
+
+                    <form class="operator-workbench" asp-action="ApplyMailAction" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="messageKey" value="@item.MessageKey" />
+
+                        <div class="operator-grid">
+                            <label class="operator-field">
+                                <span>Owner</span>
+                                <input type="text" name="owner" value="@item.Owner" placeholder="Assign owner" />
+                            </label>
+                            <label class="operator-field operator-field-wide">
+                                <span>Notes</span>
+                                <textarea name="notes" rows="2" placeholder="Optional operator note"></textarea>
+                            </label>
+                        </div>
+
+                        <div class="operator-actions">
+                            <button type="submit" name="action" value="approve" class="btn btn-crimson">Approve Suggestion</button>
+                            <button type="submit" name="action" value="manual" class="btn btn-outline-crimson">Mark Manual</button>
+                            <button type="submit" name="action" value="archive" class="btn btn-outline-crimson">Archive</button>
+                            <button type="submit" name="action" value="assign_owner" class="btn btn-outline-crimson">Assign Owner</button>
+                        </div>
+                    </form>
+                </article>
+            }
+        </div>
+    }
+</section>

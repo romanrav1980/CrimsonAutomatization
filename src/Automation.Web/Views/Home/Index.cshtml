@@ -1,0 +1,100 @@
+@model Automation.Web.Models.MailDashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<section class="hero-panel">
+    <div class="hero-copy">
+        <span class="eyebrow">Operations Workspace</span>
+        <h1>Dark crimson control surface for mail-driven process automation</h1>
+        <p class="hero-lead">
+            This MVP turns incoming Outlook mail into a raw archive, normalized records,
+            process classification, decision guidance, and a visible review queue.
+            The first release is intentionally scheduler-based, traceable, and easy to harden.
+        </p>
+        <div class="hero-actions">
+            <a class="btn btn-crimson" asp-controller="Home" asp-action="NeedsDecision">Open Needs Decision</a>
+            <a class="btn btn-outline-crimson" href="#runbook">See the MVP runbook</a>
+        </div>
+    </div>
+    <aside class="hero-aside">
+        <div class="signal-card">
+            <span class="signal-title">Live MVP flow</span>
+            <strong>Outlook -> raw -> SQLite -> classify -> decide</strong>
+            <p>The goal is operational reliability first, then deeper enrichment and automation.</p>
+        </div>
+        <div class="metric-stack">
+            <div class="metric-card">
+                <span>Total messages</span>
+                <strong>@Model.Summary.TotalMessages</strong>
+            </div>
+            <div class="metric-card">
+                <span>Needs decision</span>
+                <strong>@Model.Summary.NeedsDecision</strong>
+            </div>
+            <div class="metric-card">
+                <span>High urgency</span>
+                <strong>@Model.Summary.HighUrgency</strong>
+            </div>
+        </div>
+    </aside>
+</section>
+
+<section class="content-section">
+    <div class="section-heading">
+        <span class="eyebrow">MVP status</span>
+        <h2>What is already working</h2>
+    </div>
+    <div class="capability-grid">
+        <article class="capability-card">
+            <h3>Raw mail archive</h3>
+            <p>Outlook sync stores each message and attachment in `raw/mail` as the source-of-truth archive.</p>
+        </article>
+        <article class="capability-card">
+            <h3>Normalized database</h3>
+            <p>Raw messages are projected into SQLite for downstream classification, routing, and dashboards.</p>
+        </article>
+        <article class="capability-card">
+            <h3>Decision matrix</h3>
+            <p>The pipeline applies `Auto`, `Suggest`, and `Manual` decision modes to each processed message.</p>
+        </article>
+        <article class="capability-card">
+            <h3>Review screen</h3>
+            <p>The portal now reads the exported mail read model and shows the `Needs Decision` queue.</p>
+        </article>
+    </div>
+</section>
+
+<section class="content-section" id="runbook">
+    <div class="section-heading">
+        <span class="eyebrow">Runbook</span>
+        <h2>How to operate this MVP</h2>
+    </div>
+    <div class="flow-grid">
+        <article class="flow-step">
+            <span class="flow-index">01</span>
+            <h3>Sync mail</h3>
+            <p>Run `python .\scripts\sync_outlook_mail.py --process-after-sync` on a schedule.</p>
+        </article>
+        <article class="flow-step">
+            <span class="flow-index">02</span>
+            <h3>Normalize</h3>
+            <p>The processing pipeline stores normalized mail records in `data/automation.db`.</p>
+        </article>
+        <article class="flow-step">
+            <span class="flow-index">03</span>
+            <h3>Classify</h3>
+            <p>Each message gets a process type, urgency, confidence score, and control labels.</p>
+        </article>
+        <article class="flow-step">
+            <span class="flow-index">04</span>
+            <h3>Decide</h3>
+            <p>The decision engine maps the message to `Auto`, `Suggest`, or `Manual`.</p>
+        </article>
+        <article class="flow-step">
+            <span class="flow-index">05</span>
+            <h3>Review</h3>
+            <p>Open the `Needs Decision` screen and work through the queue.</p>
+        </article>
+    </div>
+</section>
