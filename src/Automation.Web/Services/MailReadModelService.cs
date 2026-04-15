@@ -86,6 +86,7 @@ public sealed class MailReadModelService
                         AttachmentKinds = GetStringArray(item, "attachmentKinds"),
                         AttachmentAnalysis = GetAttachmentAnalysis(item, "attachmentAnalysis"),
                         Labels = GetStringArray(item, "labels"),
+                        RecentAuditEvents = GetAuditEvents(item, "recentAuditEvents"),
                         BodyPath = GetString(item, "bodyPath"),
                         SourcePath = GetString(item, "sourcePath"),
                         RawMessagePath = GetString(item, "rawMessagePath"),
@@ -243,6 +244,30 @@ public sealed class MailReadModelService
                 ImageWidth = GetInt(item, "image_width"),
                 ImageHeight = GetInt(item, "image_height"),
                 TextExcerpt = GetString(item, "text_excerpt"),
+            });
+        }
+
+        return result;
+    }
+
+    private static List<MailAuditEventViewModel> GetAuditEvents(JsonElement element, string propertyName)
+    {
+        if (!element.TryGetProperty(propertyName, out var property) || property.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        var result = new List<MailAuditEventViewModel>();
+        foreach (var item in property.EnumerateArray())
+        {
+            result.Add(new MailAuditEventViewModel
+            {
+                EventType = GetString(item, "eventType"),
+                CreatedUtc = GetString(item, "createdUtc"),
+                Actor = GetString(item, "actor"),
+                Action = GetString(item, "action"),
+                Notes = GetString(item, "notes"),
+                Summary = GetString(item, "summary"),
             });
         }
 

@@ -35,6 +35,39 @@
         </article>
     </div>
 
+    <div class="ops-strip">
+        <article class="ops-card">
+            <span class="ops-label">Raw archive</span>
+            @if (Model.HasHistoricalBacklog && Model.HistoricalBacklog.HistoricalNotInRaw == 0)
+            {
+                <strong>Complete</strong>
+                <p>All historical mail currently found in Outlook is already stored in `raw/`.</p>
+            }
+            else if (Model.HasHistoricalBacklog)
+            {
+                <strong>@Model.HistoricalBacklog.HistoricalNotInRaw pending</strong>
+                <p>Historical messages still not archived into `raw/`.</p>
+            }
+            else
+            {
+                <strong>Waiting for snapshot</strong>
+                <p>Run an interactive Outlook sync to confirm archive completeness.</p>
+            }
+        </article>
+
+        <article class="ops-card">
+            <span class="ops-label">Queue visibility</span>
+            <strong>@Model.NeedsDecision.Count shown</strong>
+            <p>Displaying the top @Model.NeedsDecision.Count items out of @Model.Summary.NeedsDecision currently in Needs Decision.</p>
+        </article>
+
+        <article class="ops-card">
+            <span class="ops-label">High urgency</span>
+            <strong>@Model.Summary.HighUrgency total</strong>
+            <p>High-urgency items currently present across the processed mail database.</p>
+        </article>
+    </div>
+
     <div class="backlog-panel">
         <div class="section-heading backlog-heading">
             <span class="eyebrow">Historical Backlog</span>
@@ -203,6 +236,49 @@
                             }
                         </div>
                     }
+
+                    <section class="audit-panel">
+                        <div class="attachment-panel-head">
+                            <strong>Activity history</strong>
+                            <span>@item.RecentAuditEvents.Count recent event(s)</span>
+                        </div>
+
+                        @if (item.RecentAuditEvents.Count == 0)
+                        {
+                            <p class="audit-empty">No audit events recorded yet for this item.</p>
+                        }
+                        else
+                        {
+                            <div class="audit-timeline">
+                                @foreach (var auditEvent in item.RecentAuditEvents)
+                                {
+                                    <article class="audit-event">
+                                        <div class="attachment-card-head">
+                                            <strong>@auditEvent.Summary</strong>
+                                            <span class="badge-panel">@auditEvent.EventType</span>
+                                        </div>
+
+                                        <div class="decision-meta attachment-meta">
+                                            <span>UTC: @auditEvent.CreatedUtc</span>
+                                            @if (!string.IsNullOrWhiteSpace(auditEvent.Actor))
+                                            {
+                                                <span>Actor: @auditEvent.Actor</span>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(auditEvent.Action))
+                                            {
+                                                <span>Action: @auditEvent.Action</span>
+                                            }
+                                        </div>
+
+                                        @if (!string.IsNullOrWhiteSpace(auditEvent.Notes))
+                                        {
+                                            <p class="audit-notes">@auditEvent.Notes</p>
+                                        }
+                                    </article>
+                                }
+                            </div>
+                        }
+                    </section>
 
                     @if (item.AnalyzedAttachmentCount > 0)
                     {

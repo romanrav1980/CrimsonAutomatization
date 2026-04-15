@@ -49,10 +49,21 @@ public sealed class MailDecisionItemViewModel
     public List<string> AttachmentKinds { get; set; } = [];
     public List<MailAttachmentInsightViewModel> AttachmentAnalysis { get; set; } = [];
     public List<string> Labels { get; set; } = [];
+    public List<MailAuditEventViewModel> RecentAuditEvents { get; set; } = [];
     public string BodyPath { get; set; } = "";
     public string SourcePath { get; set; } = "";
     public string RawMessagePath { get; set; } = "";
     public string WebLink { get; set; } = "";
+}
+
+public sealed class MailAuditEventViewModel
+{
+    public string EventType { get; set; } = "";
+    public string CreatedUtc { get; set; } = "";
+    public string Actor { get; set; } = "";
+    public string Action { get; set; } = "";
+    public string Notes { get; set; } = "";
+    public string Summary { get; set; } = "";
 }
 
 public sealed class MailAttachmentInsightViewModel

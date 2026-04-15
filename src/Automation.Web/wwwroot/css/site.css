@@ -483,6 +483,42 @@ a:hover {
   color: #fff;
 }
 
+.ops-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.ops-card {
+  border-radius: 1.2rem;
+  border: 1px solid var(--stroke-rich);
+  padding: 1.2rem;
+  background: linear-gradient(160deg, rgba(71, 13, 21, 0.36), rgba(14, 2, 4, 0.94));
+}
+
+.ops-label {
+  display: block;
+  color: var(--ink-muted);
+  margin-bottom: 0.45rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.ops-card strong {
+  display: block;
+  font-size: 1.35rem;
+  color: #fff;
+  margin-bottom: 0.45rem;
+}
+
+.ops-card p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
 .empty-state {
   border: 1px dashed rgba(243, 195, 202, 0.24);
   border-radius: 1.3rem;
@@ -657,6 +693,38 @@ a:hover {
   background: rgba(19, 3, 5, 0.58);
 }
 
+.audit-panel {
+  margin: 1rem 0 0.9rem;
+  padding: 1rem;
+  border-radius: 1.1rem;
+  border: 1px solid rgba(255, 232, 232, 0.08);
+  background: rgba(12, 2, 4, 0.62);
+}
+
+.audit-empty {
+  margin: 0.7rem 0 0;
+  color: var(--ink-muted);
+}
+
+.audit-timeline {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+}
+
+.audit-event {
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 232, 232, 0.08);
+  background: rgba(44, 8, 13, 0.4);
+}
+
+.audit-notes {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
 .attachment-panel-head,
 .attachment-card-head {
   display: flex;
@@ -764,6 +832,10 @@ a:hover {
 @media (max-width: 767px) {
   .summary-grid {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .ops-strip {
+    grid-template-columns: 1fr;
   }
 
   .queue-meta,

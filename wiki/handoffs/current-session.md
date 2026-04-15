@@ -229,6 +229,37 @@ Current archive completeness state:
 - all previously reported remaining `200` historical messages were a key-mismatch accounting issue, not missing raw artifacts
 - pending unread historical attachments not yet in raw: `0`
 
+## Latest Downstream Refresh
+
+After archive completeness was verified, the full downstream refresh was run against the complete raw archive:
+
+- command:
+  - `python .\scripts\process_mail_mvp.py`
+- result:
+  - `19449` raw mail artifacts loaded
+  - `81742` attachments analyzed
+  - `19449` mail artifacts classified
+  - `19449` mail items processed into SQLite
+  - `0` failed items
+  - dashboard summary refreshed to:
+    - `totalMessages: 19449`
+    - `needsDecision: 16715`
+    - `autoReady: 2734`
+    - `manualReview: 773`
+    - `highUrgency: 2208`
+
+## Latest Operator Workbench Upgrade
+
+The `Needs Decision` screen was upgraded from a plain queue view toward a more usable operator workbench:
+
+- added an operational summary strip:
+  - raw archive completeness state
+  - visible queue slice vs total queue size
+  - total high-urgency count
+- added per-item activity history directly in the UI
+- the read model now includes recent audit events for visible queue items
+- the dashboard snapshot was re-exported after the database-backed upgrade
+
 ## Important Operational Rules
 
 - Run the desktop Outlook provider only in an interactive logged-in Windows session.

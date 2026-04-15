@@ -128,3 +128,26 @@
   - `historicalUnreadNotInRaw`: `0`
   - `historicalUnreadNotInRawAttachmentCount`: `0`
 - total raw saved messages on disk remained `19449`
+
+## [2026-04-15] process-update | Full downstream refresh on complete raw archive
+
+- ran the full downstream pipeline after confirming `raw/` archive completeness
+- refresh result:
+  - `19449` raw mail artifacts loaded
+  - `81742` attachments analyzed
+  - `19449` mail artifacts classified
+  - `19449` mail items processed
+  - `0` failed items
+- refreshed read-model summary:
+  - `needsDecision`: `16715`
+  - `autoReady`: `2734`
+  - `manualReview`: `773`
+  - `highUrgency`: `2208`
+
+## [2026-04-15] ui-update | Needs Decision operator workbench history
+
+- upgraded the `Needs Decision` screen with a stronger operator-oriented summary strip
+- added raw archive completeness visibility to the UI
+- added queue visibility context (`shown` vs total queue size)
+- added per-item recent audit history directly in the dashboard read model and UI
+- re-exported `data/mail_triage_read_model.json` after the read-model schema extension

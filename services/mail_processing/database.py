@@ -230,6 +230,26 @@ class MailMvpRepository:
                 """
             ).fetchall()
 
+            audit_by_message: dict[str, list[dict[str, object]]] = {}
+            message_keys = [str(row["message_key"]) for row in needs_decision_rows]
+            if message_keys:
+                placeholders = ", ".join("?" for _ in message_keys)
+                audit_rows = connection.execute(
+                    f"""
+                    SELECT message_key, event_type, payload_json, created_utc, id
+                    FROM mail_audit_events
+                    WHERE message_key IN ({placeholders})
+                    ORDER BY created_utc DESC, id DESC
+                    """,
+                    message_keys,
+                ).fetchall()
+                for audit_row in audit_rows:
+                    message_key = str(audit_row["message_key"])
+                    bucket = audit_by_message.setdefault(message_key, [])
+                    if len(bucket) >= 6:
+                        continue
+                    bucket.append(self._serialize_audit_event(audit_row))
+
         summary = {
             "totalMessages": int(totals["total_messages"] or 0),
             "needsDecision": int(totals["needs_decision"] or 0),
@@ -269,6 +289,7 @@ class MailMvpRepository:
                     "sourcePath": row["source_path"],
                     "rawMessagePath": row["raw_message_path"],
                     "webLink": row["web_link"],
+                    "recentAuditEvents": audit_by_message.get(row["message_key"], []),
                 }
             )
 
@@ -374,6 +395,66 @@ class MailMvpRepository:
         connection = sqlite3.connect(self.db_path)
         connection.execute("PRAGMA journal_mode=WAL;")
         return connection
+
+    @staticmethod
+    def _serialize_audit_event(row: sqlite3.Row) -> dict[str, object]:
+        payload = MailMvpRepository._parse_json_object(row["payload_json"])
+        event_type = str(row["event_type"] or "").strip()
+        return {
+            "eventType": event_type,
+            "createdUtc": str(row["created_utc"] or ""),
+            "actor": str(payload.get("actor") or ""),
+            "action": str(payload.get("action") or ""),
+            "notes": str(payload.get("notes") or ""),
+            "summary": MailMvpRepository._audit_summary(event_type, payload),
+        }
+
+    @staticmethod
+    def _parse_json_object(value: str | None) -> dict[str, object]:
+        if not value:
+            return {}
+        try:
+            parsed = json.loads(value)
+        except Exception:
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+
+    @staticmethod
+    def _audit_summary(event_type: str, payload: dict[str, object]) -> str:
+        if event_type == "operator_action":
+            action = str(payload.get("action") or "").strip()
+            actor = str(payload.get("actor") or "").strip()
+            new_status = str(payload.get("newStatus") or "").strip()
+            new_owner = str(payload.get("newOwner") or "").strip()
+            action_label = {
+                "approve": "Suggestion approved",
+                "archive": "Item archived",
+                "manual": "Moved to manual review",
+                "assign_owner": f"Owner assigned to {new_owner or 'unassigned'}",
+            }.get(action, action or "Operator action applied")
+            if actor and new_status:
+                return f"{action_label} by {actor}. Status: {new_status}."
+            if actor:
+                return f"{action_label} by {actor}."
+            if new_status:
+                return f"{action_label}. Status: {new_status}."
+            return action_label
+
+        if event_type == "processed":
+            process_type = str(payload.get("processType") or "").strip()
+            decision_mode = str(payload.get("decisionMode") or "").strip()
+            status = str(payload.get("status") or "").strip()
+            recommended_action = str(payload.get("recommendedAction") or "").strip()
+            parts = [part for part in [process_type, decision_mode, status] if part]
+            if parts and recommended_action:
+                return f"Processed as {' / '.join(parts)}. Recommended: {recommended_action}."
+            if parts:
+                return f"Processed as {' / '.join(parts)}."
+            if recommended_action:
+                return f"Processed. Recommended: {recommended_action}."
+            return "Processed by the mail pipeline."
+
+        return event_type or "Audit event"
 
     @staticmethod
     def _ensure_mail_item_columns(connection: sqlite3.Connection) -> None:
